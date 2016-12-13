@@ -451,21 +451,9 @@ struct String : public Vector<char> {
   }
 };
 
-// Basic allocator class defining methods for
-// built-in and custom allocators.
-// allocate/deallocate are non-const so we can have allocator state
-// TODO use STL-conformant allocator traits instead
-class fb_allocator {
- public:
-  //put some nonsense here so compiler doesn't complain about unused values
-  //fb_allocator shouldn't ever be directly instantiated anyways
-  virtual uint8_t *allocate(size_t size){return (uint8_t*)(size & 0);};
-  virtual void deallocate(uint8_t *p){++p;};
-};
-
 // Simple indirection for buffer allocation, to allow this to be overridden
 // with custom allocation (see the FlatBufferBuilder constructor).
-class simple_allocator : public fb_allocator {
+class simple_allocator {
  public:
   virtual ~simple_allocator(){}
   virtual uint8_t *allocate(size_t size) { return new uint8_t[size]; }
@@ -478,7 +466,7 @@ class simple_allocator : public fb_allocator {
 class vector_downward {
  public:
   explicit vector_downward(size_t initial_size,
-                           fb_allocator &allocator)
+                           simple_allocator &allocator)
     : reserved_(initial_size),
       buf_(allocator.allocate(reserved_)),
       cur_(buf_ + reserved_),
@@ -571,7 +559,7 @@ class vector_downward {
   size_t reserved_;
   uint8_t *buf_;
   uint8_t *cur_;  // Points at location between empty (below) and used (above).
-  fb_allocator &allocator_;
+  simple_allocator &allocator_;
 };
 
 // Converts a Field ID to a virtual table offset.
@@ -619,7 +607,7 @@ FLATBUFFERS_FINAL_CLASS
   /// used. Defaults to `nullptr`, which means the `default_allocator` will be
   /// be used.
   explicit FlatBufferBuilder(uoffset_t initial_size = 1024,
-                             fb_allocator *allocator = nullptr)
+                             simple_allocator *allocator = nullptr)
       : buf_(initial_size, allocator ? *allocator : default_allocator),
         nested(false), finished(false), minalign_(1), force_defaults_(false),
         string_pool(nullptr) {

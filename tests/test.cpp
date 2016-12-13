@@ -80,7 +80,7 @@ uint32_t lcg_rand() {
 }
 void lcg_reset() { lcg_seed = 48271; }
 
-struct MallocAllocator : public flatbuffers::fb_allocator {
+struct MallocAllocator : public flatbuffers::simple_allocator {
   virtual uint8_t *allocate(size_t size) {
     return static_cast<uint8_t*>(malloc(size));
   }
