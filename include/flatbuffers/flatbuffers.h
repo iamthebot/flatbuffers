@@ -460,6 +460,8 @@ class simple_allocator {
   virtual void deallocate(uint8_t *p) { delete[] p; }
 };
 
+static simple_allocator default_allocator;
+
 // This is a minimal replication of std::vector<uint8_t> functionality,
 // except growing from higher to lower addresses. i.e push_back() inserts data
 // in the lowest address in the vector.
@@ -489,8 +491,9 @@ class vector_downward {
   #ifndef FLATBUFFERS_CPP98_STL
   // Relinquish the pointer to the caller.
   unique_ptr_t release() {
+
     // Point to the desired offset.
-    unique_ptr_t retval(data(), [this](uint8_t*){allocator_.deallocate(buf_);});
+    unique_ptr_t retval(data(), [this](uint8_t*){default_allocator.deallocate(buf_);});
 
     // Don't deallocate when this instance is destroyed.
     buf_ = nullptr;
@@ -1211,7 +1214,7 @@ FLATBUFFERS_FINAL_CLASS
     voffset_t id;
   };
 
-  simple_allocator default_allocator;
+  //simple_allocator default_allocator;
 
   vector_downward buf_;
 
